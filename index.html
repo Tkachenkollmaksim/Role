@@ -9,7 +9,7 @@
       font-family: Arial, sans-serif;
       text-align: center;
       padding: 40px 20px;
-      background-color: #f4f4f4;
+      background-color: #f7f7f7;
     }
     input, button, select {
       font-size: 16px;
@@ -53,8 +53,8 @@
   </div>
 
   <script>
-    // ✅ Replace this with your actual Google Apps Script Web App URL:
-    const sheetURL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbwlF2h8Xelkso9ndNGLQqRVMqtPZl0fghmmfe3EKvGjo2RfVNYE8KslH9HrWIAM8b74/exec';
+    // ✅ Your deployed Google Apps Script URL goes here (with CORS proxy)
+    const sheetURL = 'https://script.google.com/macros/s/AKfycbx-j4kZi1I5PaS4SLFz-PMMTC5dMzKdQOpL6q7iuJ2EdiHJEXzq_FKP16KQlf0n8V9D1g/exec';
 
     window.onload = function () {
       const name = localStorage.getItem("studentName");
@@ -88,13 +88,17 @@
         body: JSON.stringify({ name, status, reason }),
         headers: { "Content-Type": "application/json" },
       })
-      .then(res => res.json())
+      .then(res => {
+        console.log('Raw response:', res);
+        return res.json();
+      })
       .then(data => {
+        console.log('Parsed data:', data);
         if (data.result === 'success') {
           document.querySelectorAll("button").forEach(btn => btn.disabled = true);
           document.getElementById("thanksMsg").innerText = "✅ Your attendance has been recorded. Thank you!";
         } else {
-          throw new Error(data.message || "Unknown error");
+          throw new Error(data.message || "Unexpected error");
         }
       })
       .catch(err => {
