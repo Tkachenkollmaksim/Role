@@ -53,7 +53,7 @@
   </div>
 
   <script>
-    const sheetURL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbyuL42fBs_7EvXhuvYlSTla-XvaCJK-SHyJLB5qBhs6Xf15KCvn4hCmUQf1T-zSHUUnvw/exec';
+    const sheetURL = 'https://script.google.com/macros/s/AKfycbyuL42fBs_7EvXhuvYlSTla-XvaCJK-SHyJLB5qBhs6Xf15KCvn4hCmUQf1T-zSHUUnvw/exec';
 
     function start() {
       const name = document.getElementById("name").value.trim();
@@ -80,8 +80,6 @@
       .then(async res => {
         const text = await res.text();
         console.log("🟦 Raw server response text:", text);
-        document.getElementById("status").innerText = "🔎 Response: " + text;
-
         if (text.trim().toLowerCase().includes("success")) {
           document.querySelectorAll("button").forEach(btn => btn.disabled = true);
           document.getElementById("status").innerText = "✅ Attendance recorded.";
