@@ -3,15 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Roll Call</title>
+  <title>Music Roll Call</title>
   <style>
-    body { font-family: Arial; text-align: center; margin-top: 40px; }
-    button, select { padding: 10px 20px; margin: 10px; font-size: 16px; }
-    #notHereReason { display: none; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #f4f4f4;
+    }
+    input, button, select {
+      font-size: 16px;
+      padding: 10px;
+      margin: 10px;
+    }
+    #rollCall, #notHereReason, #thanksMsg {
+      margin-top: 20px;
+    }
+    button:disabled {
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
-  <h2>Music Course Roll Call</h2>
+  <h2>🎶 Music Course Roll Call</h2>
+
   <div id="namePrompt">
     <p>Please enter your full name:</p>
     <input type="text" id="nameInput" />
@@ -23,19 +38,23 @@
     <button onclick="submitStatus('Here')">Here</button>
     <button onclick="showReason()">Not Here</button>
 
-    <div id="notHereReason">
+    <div id="notHereReason" style="display:none;">
+      <p>Select a reason:</p>
       <select id="reasonSelect">
         <option value="Emergency">Emergency</option>
         <option value="With Teacher - approved.">With Teacher - approved.</option>
         <option value="Bathroom">Bathroom</option>
       </select>
+      <br/>
       <button onclick="submitStatus('Not Here')">Submit Reason</button>
     </div>
-    <p id="thanksMsg" style="margin-top:20px;"></p>
+
+    <p id="thanksMsg"></p>
   </div>
 
   <script>
-    const sheetURL = 'https://script.google.com/macros/s/AKfycbx-j4kZi1I5PaS4SLFz-PMMTC5dMzKdQOpL6q7iuJ2EdiHJEXzq_FKP16KQlf0n8V9D1g/exec';
+    // ✅ Replace this with your actual Google Apps Script Web App URL:
+    const sheetURL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbwlF2h8Xelkso9ndNGLQqRVMqtPZl0fghmmfe3EKvGjo2RfVNYE8KslH9HrWIAM8b74/exec';
 
     window.onload = function () {
       const name = localStorage.getItem("studentName");
@@ -44,7 +63,7 @@
         document.getElementById("rollCall").style.display = "block";
         document.getElementById("greeting").innerText = "Welcome, " + name + "!";
       }
-    }
+    };
 
     function saveName() {
       const name = document.getElementById("nameInput").value.trim();
@@ -60,7 +79,9 @@
 
     function submitStatus(status) {
       const name = localStorage.getItem("studentName");
-      const reason = status === 'Not Here' ? document.getElementById("reasonSelect").value : "";
+      const reason = status === 'Not Here'
+        ? document.getElementById("reasonSelect").value
+        : "";
 
       fetch(sheetURL, {
         method: "POST",
@@ -68,11 +89,18 @@
         headers: { "Content-Type": "application/json" },
       })
       .then(res => res.json())
-      .then(() => {
-        document.querySelectorAll("button").forEach(btn => btn.disabled = true);
-        document.getElementById("thanksMsg").innerText = "Your attendance has been recorded.";
+      .then(data => {
+        if (data.result === 'success') {
+          document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+          document.getElementById("thanksMsg").innerText = "✅ Your attendance has been recorded. Thank you!";
+        } else {
+          throw new Error(data.message || "Unknown error");
+        }
       })
-      .catch(err => alert("Error: " + err));
+      .catch(err => {
+        console.error("Fetch error:", err);
+        alert("❌ Failed to submit attendance. Please try again.");
+      });
     }
   </script>
 </body>
