@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
   <title>Music Roll Call</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,7 +16,7 @@
       padding: 10px;
       margin: 10px;
     }
-    #rollCall, #notHereReason, #thanksMsg {
+    #rollCall, #notHereReason, #status {
       margin-top: 20px;
     }
     button:disabled {
@@ -27,85 +27,99 @@
 <body>
   <h2>🎶 Music Course Roll Call</h2>
 
-  <div id="namePrompt">
-    <p>Please enter your full name:</p>
-    <input type="text" id="nameInput" />
-    <button onclick="saveName()">Submit</button>
+  <div id="setup">
+    <p>Enter your full name:</p>
+    <input id="name" type="text" />
+    <button onclick="start()">Submit</button>
   </div>
 
   <div id="rollCall" style="display:none;">
     <h3 id="greeting"></h3>
-    <button onclick="submitStatus('Here')">Here</button>
+    <button onclick="markHere()">Here</button>
     <button onclick="showReason()">Not Here</button>
 
     <div id="notHereReason" style="display:none;">
-      <p>Select a reason:</p>
-      <select id="reasonSelect">
+      <p>Select reason:</p>
+      <select id="reason">
         <option value="Emergency">Emergency</option>
         <option value="With Teacher - approved.">With Teacher - approved.</option>
         <option value="Bathroom">Bathroom</option>
       </select>
-      <br/>
-      <button onclick="submitStatus('Not Here')">Submit Reason</button>
+      <br><br>
+      <button onclick="markNotHere()">Submit Reason</button>
     </div>
 
-    <p id="thanksMsg"></p>
+    <p id="status"></p>
   </div>
 
   <script>
-    // ✅ Your deployed Google Apps Script URL goes here (with CORS proxy)
-    const sheetURL = 'https://script.google.com/macros/s/AKfycbw-otE84au9tt_-uDWUxCWo75GYw2s4P6ew-GTLAylNErmCjYPihoJFvbq4BxnNzJiwmw/exec';
+    // ✅ Use your Apps Script Web App URL (not proxied)
+    const sheetURL = 'https://script.google.com/macros/s/AKfycbwlF2h8Xelkso9ndNGLQqRVMqtPZl0fghmmfe3EKvGjo2RfVNYE8KslH9HrWIAM8b74/exec';
 
-    window.onload = function () {
-      const name = localStorage.getItem("studentName");
-      if (name) {
-        document.getElementById("namePrompt").style.display = "none";
-        document.getElementById("rollCall").style.display = "block";
-        document.getElementById("greeting").innerText = "Welcome, " + name + "!";
-      }
-    };
-
-    function saveName() {
-      const name = document.getElementById("nameInput").value.trim();
-      if (name) {
-        localStorage.setItem("studentName", name);
-        location.reload();
-      }
+    function start() {
+      const name = document.getElementById("name").value.trim();
+      if (!name) return alert("Please enter your name.");
+      localStorage.setItem("studentName", name);
+      document.getElementById("setup").style.display = "none";
+      document.getElementById("rollCall").style.display = "block";
+      document.getElementById("greeting").innerText = `Welcome, ${name}`;
     }
 
     function showReason() {
       document.getElementById("notHereReason").style.display = "block";
     }
 
-    function submitStatus(status) {
+    function submitAttendance(status, reason = "") {
       const name = localStorage.getItem("studentName");
-      const reason = status === 'Not Here'
-        ? document.getElementById("reasonSelect").value
-        : "";
+      const payload = { name, status, reason };
 
       fetch(sheetURL, {
         method: "POST",
-        body: JSON.stringify({ name, status, reason }),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       })
-      .then(res => {
-        console.log('Raw response:', res);
-        return res.json();
-      })
-      .then(data => {
-        console.log('Parsed data:', data);
-        if (data.result === 'success') {
-          document.querySelectorAll("button").forEach(btn => btn.disabled = true);
-          document.getElementById("thanksMsg").innerText = "✅ Your attendance has been recorded. Thank you!";
-        } else {
-          throw new Error(data.message || "Unexpected error");
+      .then(async res => {
+        const text = await res.text();
+        console.log("🟦 Raw response text:", text);
+
+        try {
+          const data = JSON.parse(text);
+          console.log("🟩 Parsed JSON:", data);
+          if (data.result === "success") {
+            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+            document.getElementById("status").innerText = "✅ Attendance recorded.";
+          } else {
+            throw new Error(data.message || "Unexpected server response");
+          }
+        } catch (err) {
+          console.error("🟥 JSON parse error:", err);
+          alert("❌ Server returned invalid response.");
         }
       })
       .catch(err => {
-        console.error("Fetch error:", err);
+        console.error("🟥 Network error:", err);
         alert("❌ Failed to submit attendance. Please try again.");
       });
     }
+
+    function markHere() {
+      submitAttendance("Here");
+    }
+
+    function markNotHere() {
+      const reason = document.getElementById("reason").value;
+      submitAttendance("Not Here", reason);
+    }
+
+    // Auto-start if name is saved
+    window.onload = () => {
+      const name = localStorage.getItem("studentName");
+      if (name) {
+        document.getElementById("setup").style.display = "none";
+        document.getElementById("rollCall").style.display = "block";
+        document.getElementById("greeting").innerText = `Welcome, ${name}`;
+      }
+    };
   </script>
 </body>
 </html>
