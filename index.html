@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Music Roll Call</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
@@ -53,8 +53,7 @@
   </div>
 
   <script>
-    // ✅ Use your Apps Script Web App URL (not proxied)
-    const sheetURL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbz-5Qb9GrF1QAQVSoiPpV7byPxbysN0jdlcXAJgPAewoF-TIDBw8A47F5nbK2qFaiOamg/exec';
+    const sheetURL = 'https://corsproxy.io/?https://script.google.com/macros/s/AKfycbyuL42fBs_7EvXhuvYlSTla-XvaCJK-SHyJLB5qBhs6Xf15KCvn4hCmUQf1T-zSHUUnvw/exec';
 
     function start() {
       const name = document.getElementById("name").value.trim();
@@ -78,26 +77,18 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       })
-      .then(async res => {
-        const text = await res.text();
-        console.log("🟦 Raw response text:", text);
-
-        try {
-          const data = JSON.parse(text);
-          console.log("🟩 Parsed JSON:", data);
-          if (data.result === "success") {
-            document.querySelectorAll("button").forEach(btn => btn.disabled = true);
-            document.getElementById("status").innerText = "✅ Attendance recorded.";
-          } else {
-            throw new Error(data.message || "Unexpected server response");
-          }
-        } catch (err) {
-          console.error("🟥 JSON parse error:", err);
-          alert("❌ Server returned invalid response.");
+      .then(res => res.text())
+      .then(text => {
+        console.log("🟩 Server response:", text);
+        if (text.trim().toLowerCase().includes("success")) {
+          document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+          document.getElementById("status").innerText = "✅ Attendance recorded.";
+        } else {
+          throw new Error(text);
         }
       })
       .catch(err => {
-        console.error("🟥 Network error:", err);
+        console.error("🟥 Fetch error:", err);
         alert("❌ Failed to submit attendance. Please try again.");
       });
     }
