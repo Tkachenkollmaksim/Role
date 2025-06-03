@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Roll Call</title>
+  <style>
+    body { font-family: Arial; text-align: center; margin-top: 40px; }
+    button, select { padding: 10px 20px; margin: 10px; font-size: 16px; }
+    #notHereReason { display: none; }
+  </style>
+</head>
+<body>
+  <h2>Music Course Roll Call</h2>
+  <div id="namePrompt">
+    <p>Please enter your full name:</p>
+    <input type="text" id="nameInput" />
+    <button onclick="saveName()">Submit</button>
+  </div>
+
+  <div id="rollCall" style="display:none;">
+    <h3 id="greeting"></h3>
+    <button onclick="submitStatus('Here')">Here</button>
+    <button onclick="showReason()">Not Here</button>
+
+    <div id="notHereReason">
+      <select id="reasonSelect">
+        <option value="Emergency">Emergency</option>
+        <option value="With Teacher - approved.">With Teacher - approved.</option>
+        <option value="Bathroom">Bathroom</option>
+      </select>
+      <button onclick="submitStatus('Not Here')">Submit Reason</button>
+    </div>
+    <p id="thanksMsg" style="margin-top:20px;"></p>
+  </div>
+
+  <script>
+    const sheetURL = 'PASTE_YOUR_WEB_APP_URL_HERE';
+
+    window.onload = function () {
+      const name = localStorage.getItem("studentName");
+      if (name) {
+        document.getElementById("namePrompt").style.display = "none";
+        document.getElementById("rollCall").style.display = "block";
+        document.getElementById("greeting").innerText = "Welcome, " + name + "!";
+      }
+    }
+
+    function saveName() {
+      const name = document.getElementById("nameInput").value.trim();
+      if (name) {
+        localStorage.setItem("studentName", name);
+        location.reload();
+      }
+    }
+
+    function showReason() {
+      document.getElementById("notHereReason").style.display = "block";
+    }
+
+    function submitStatus(status) {
+      const name = localStorage.getItem("studentName");
+      const reason = status === 'Not Here' ? document.getElementById("reasonSelect").value : "";
+
+      fetch(sheetURL, {
+        method: "POST",
+        body: JSON.stringify({ name, status, reason }),
+        headers: { "Content-Type": "application/json" },
+      })
+      .then(res => res.json())
+      .then(() => {
+        document.querySelectorAll("button").forEach(btn => btn.disabled = true);
+        document.getElementById("thanksMsg").innerText = "Your attendance has been recorded.";
+      })
+      .catch(err => alert("Error: " + err));
+    }
+  </script>
+</body>
+</html>
